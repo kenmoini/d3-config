@@ -14,8 +14,8 @@
 <script type="text/javascript">
 <!--
   function populateFormDemo() {
-    jQuery("#registryUsername").val("qwerqwerqwer");
-    jQuery("#registryPassword").val("asdfasdfasdfasdfasdfasdfasdf");
+    jQuery("#registryUsername").val("CHANGE_ME");
+    jQuery("#registryPassword").val("CHANGE_ME");
     jQuery("#domainName").val("discon.lab");
     jQuery("#localRepoPath").val("/opt/repos");
     jQuery("#bastionHostHostname").val("bastion");
@@ -54,7 +54,7 @@
     jQuery("#inventoryBuilder-staticIPCIDR-17").val("192.168.42.55/24");
     jQuery("#initialUsername").val("root");
     jQuery("#nodeAuthenticationMethod").val("provideCommonPassword");
-    jQuery("#initialPassword").val("asdfasdfasdf");
+    jQuery("#initialPassword").val("CHANGE_ME");
     jQuery("#newUsername").val("ocp-worker");
     jQuery("#privateRPMRepoURL").val("http://bastion.discon.lab/rpms/");
     jQuery("#additionalBlockDevice").val("/dev/sdb");
@@ -63,11 +63,14 @@
     jQuery("#registry_openshift_master_default_subdomain").val("registry-apps.ocp-cluster.discon.lab");
     jQuery("#clusterAuthenticationMethod").val("htpasswd");
     jQuery("#ocpAdminUsername").val("ocp-admin");
-    jQuery("#ocpAdminPassword").val("asfasdfasdf");
+    jQuery("#ocpAdminPassword").val("CHANGE_ME");
     jQuery("#ansible_ssh_user").val("ocp-worker");
     jQuery("#openshift_master_cluster_hostname").val("ocp-master-lb-1.discon.lab");
     jQuery("#openshift_master_cluster_public_hostname").val("ocp-cluster.discon.lab");
     jQuery("#openshift_master_default_subdomain").val("apps.ocp-cluster.discon.lab");
+    ocpClusterTypeContainedTextsWrapper(jQuery('#ocpClusterType'));
+    ocpRegistryTypeContainedTextsWrapper(jQuery('#ocpRegistryType'));
+    glusterStorageTypeTextsWrapper(jQuery('#glusterStorageType'));
   }
   function resetInventoryRowHeaderNumbers() {
     var colNum = 1;
@@ -195,6 +198,60 @@
       }
     }
   }
+  function ocpClusterTypeContainedTextsWrapper(targ) {
+      jQuery('.ocpClusterTypeContainedTexts').hide();
+      jQuery('.requirementsRowBits').hide();
+      if (jQuery(targ).val() !== 'NA') {
+        jQuery('.' + jQuery(targ).val() + 'Text').show().css("display", "inline-block");
+      }
+      jQuery('.requirementsRowBits').show().css("display", "flex");
+  }
+  function ocpRegistryTypeContainedTextsWrapper(targ) {
+      jQuery('.ocpRegistryTypeContainedTexts').hide();
+      jQuery('.requirementsRowBits').hide();
+      switch (jQuery(targ).val()) {
+        case "standalone":
+          jQuery('.standaloneText.ocpRegistryTypeContainedTexts').show().css("display", "inline-block");
+        break;
+        case "multipleMasterHA":
+          jQuery('.multipleRegistryMasterHAText.ocpRegistryTypeContainedTexts').show().css("display", "inline-block");
+        break;
+        case "external":
+          jQuery('.externalRegistryText.ocpRegistryTypeContainedTexts').show().css("display", "inline-block");
+        break;
+        case "integrated":
+          jQuery('.integratedRegistryText.ocpRegistryTypeContainedTexts').show().css("display", "inline-block");
+        break;
+        case "NA":
+        default:
+          jQuery('.ocpRegistryTypeContainedTexts').hide();
+        break;
+      }
+      jQuery('.requirementsRowBits').show().css("display", "flex");
+  }
+  function glusterStorageTypeTextsWrapper(targ) {
+    jQuery('.glusterTypeContainedTexts').hide();
+    jQuery('.requirementsRowBits').hide();
+    switch (jQuery(targ).val()) {
+      case "none":
+        jQuery('.standaloneText.glusterTypeContainedTexts').show().css("display", "inline-block");
+      break;
+      case "singleClusterSingleBrick":
+        jQuery('.singleClusterSingleBrickGlusterText.glusterTypeContainedTexts').show().css("display", "inline-block");
+      break;
+      case "singleClusterSeparateBricks":
+        jQuery('.singleClusterSeparateBricksGlusterText.glusterTypeContainedTexts').show().css("display", "inline-block");
+      break;
+      case "separateClusterSeparateBricks":
+        jQuery('.separateClusterSeparateBricksGlusterText.glusterTypeContainedTexts').show().css("display", "inline-block");
+      break;
+      case "NA":
+      default:
+        jQuery('.glusterTypeContainedTexts').hide();
+      break;
+    }
+    jQuery('.requirementsRowBits').show().css("display", "flex");
+  }
 
   jQuery(document).ready(function() {
     jQuery.ajaxSetup({
@@ -276,62 +333,14 @@
         break;
       }
     });
-
     jQuery('#ocpClusterType').change(function(){
-      jQuery('.ocpClusterTypeContainedTexts').hide();
-      jQuery('.requirementsRowBits').hide();
-      if (jQuery(this).val() !== 'NA') {
-        jQuery('.' + jQuery(this).val() + 'Text').show().css("display", "inline-block");
-      }
-      jQuery('.requirementsRowBits').show().css("display", "flex");
+      ocpClusterTypeContainedTextsWrapper(jQuery(this));
     });
-
     jQuery('#ocpRegistryType').change(function(){
-      jQuery('.ocpRegistryTypeContainedTexts').hide();
-      jQuery('.requirementsRowBits').hide();
-      switch (jQuery(this).val()) {
-        case "standalone":
-          jQuery('.standaloneText.ocpRegistryTypeContainedTexts').show().css("display", "inline-block");
-        break;
-        case "multipleMasterHA":
-          jQuery('.multipleRegistryMasterHAText.ocpRegistryTypeContainedTexts').show().css("display", "inline-block");
-        break;
-        case "external":
-          jQuery('.externalRegistryText.ocpRegistryTypeContainedTexts').show().css("display", "inline-block");
-        break;
-        case "integrated":
-          jQuery('.integratedRegistryText.ocpRegistryTypeContainedTexts').show().css("display", "inline-block");
-        break;
-        case "NA":
-        default:
-          jQuery('.ocpRegistryTypeContainedTexts').hide();
-        break;
-      }
-      jQuery('.requirementsRowBits').show().css("display", "flex");
+      ocpRegistryTypeContainedTextsWrapper(jQuery(this));
     });
-
     jQuery('#glusterStorageType').change(function(){
-      jQuery('.glusterTypeContainedTexts').hide();
-      jQuery('.requirementsRowBits').hide();
-      switch (jQuery(this).val()) {
-        case "none":
-          jQuery('.standaloneText.glusterTypeContainedTexts').show().css("display", "inline-block");
-        break;
-        case "singleClusterSingleBrick":
-          jQuery('.singleClusterSingleBrickGlusterText.glusterTypeContainedTexts').show().css("display", "inline-block");
-        break;
-        case "singleClusterSeparateBricks":
-          jQuery('.singleClusterSeparateBricksGlusterText.glusterTypeContainedTexts').show().css("display", "inline-block");
-        break;
-        case "separateClusterSeparateBricks":
-          jQuery('.separateClusterSeparateBricksGlusterText.glusterTypeContainedTexts').show().css("display", "inline-block");
-        break;
-        case "NA":
-        default:
-          jQuery('.glusterTypeContainedTexts').hide();
-        break;
-      }
-      jQuery('.requirementsRowBits').show().css("display", "flex");
+      glusterStorageTypeTextsWrapper(jQuery(this));
     });
 
     jQuery("#resetInventoryRows").on('click', function(e) {
