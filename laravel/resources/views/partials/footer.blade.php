@@ -1,5 +1,7 @@
     <footer>
-      <p><a href="https://github.com/kenmoini/d3-config">Find me on Github</a></p>
+      <div class="col-sm-12 mt-5 mb-5">
+        <p class="text-center"><a href="https://github.com/kenmoini/d3-config">Find me on Github</a></p>
+      </div>
     </footer>
 
     <!-- Bootstrap core JavaScript
