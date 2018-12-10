@@ -23,12 +23,12 @@ class D3CWizardController extends Controller
       $streamedData .= 'echo "====== Running Gluster Deployment playbook..."' . "\n";
       $streamedData .= 'echo "===================================================="' . "\n";
       $streamedData .= 'echo ""' . "\n";
-      $streamedData .= 'echo "======== Running Host Prep Ansible playbook..."' . "\n";
+      $streamedData .= 'echo "======== Running Gluster Host Prep Ansible playbook..."' . "\n";
       $streamedData .= 'ansible-playbook -i inventory/ocp-gluster-inventory ./prepare-gluster-hosts.yml' . "\n";
       $streamedData .= '' . "\n";
-      $streamedData .= 'echo "======== Setting up software on Gluster hosts..."' . "\n";
-      $streamedData .= 'ansible-playbook -i inventory/ocp-gluster-inventory ./setup-gluster-hosts.yml' . "\n";
-      $streamedData .= '' . "\n";
+      //$streamedData .= 'echo "======== Setting up software on Gluster hosts..."' . "\n";
+      //$streamedData .= 'ansible-playbook -i inventory/ocp-gluster-inventory ./setup-gluster-hosts.yml' . "\n";
+      //$streamedData .= '' . "\n";
       $streamedData .= 'echo "======== Configuring Gluster..."' . "\n";
       $streamedData .= 'ansible-playbook -i inventory/ocp-gluster-inventory ./configure-gluster-hosts.yml' . "\n";
       $streamedData .= '' . "\n";
@@ -219,6 +219,18 @@ class D3CWizardController extends Controller
 
     $ocpHostPrepScripts_genericHosts =  app('App\Http\Controllers\OCPHostPrepController')->generateScriptForTheWizard("prepare-generic-hosts", $input);
     $compiledFiles["3_ocp-playbooks/prepare-generic-hosts.yml"] = ["3_ocp-playbooks/prepare-generic-hosts.yml", $ocpHostPrepScripts_genericHosts];
+
+    $ocpHostPrepScripts_glusterHosts =  app('App\Http\Controllers\OCPHostPrepController')->generateScriptForTheWizard("prepare-gluster-hosts", $input);
+    $compiledFiles["3_ocp-playbooks/prepare-gluster-hosts.yml"] = ["3_ocp-playbooks/prepare-gluster-hosts.yml", $ocpHostPrepScripts_glusterHosts];
+
+    $ocpHostPrepScripts_glusterHosts =  app('App\Http\Controllers\OCPHostPrepController')->generateScriptForTheWizard("prepare-gluster-hosts", $input);
+    $compiledFiles["3_ocp-playbooks/prepare-gluster-hosts.yml"] = ["3_ocp-playbooks/prepare-gluster-hosts.yml", $ocpHostPrepScripts_glusterHosts];
+
+    $ocpHostPrepScripts_ocpHosts =  app('App\Http\Controllers\OCPHostPrepController')->generateScriptForTheWizard("prepare-ocp-hosts", $input);
+    $compiledFiles["3_ocp-playbooks/prepare-ocp-hosts.yml"] = ["3_ocp-playbooks/prepare-ocp-hosts.yml", $ocpHostPrepScripts_ocpHosts];
+
+    $ocpHostPrepScripts_registryHosts =  app('App\Http\Controllers\OCPHostPrepController')->generateScriptForTheWizard("prepare-registry-hosts", $input);
+    $compiledFiles["3_ocp-playbooks/prepare-registry-hosts.yml"] = ["3_ocp-playbooks/prepare-registry-hosts.yml", $ocpHostPrepScripts_registryHosts];
 
     $ocpHostPrepScripts_initial_auth_config =  app('App\Http\Controllers\OCPHostPrepController')->generateScriptForTheWizard("initial-auth-config", $input);
     $compiledFiles["3_ocp-playbooks/initial-auth-config.yml"] = ["3_ocp-playbooks/initial-auth-config.yml", $ocpHostPrepScripts_initial_auth_config];
