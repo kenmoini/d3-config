@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
-class DMZProvisionerController extends Controller
+class DMZProvisionerOLDController extends Controller
 {
     public function index() {
       return view('dmz-provisioner');
