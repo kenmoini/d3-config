@@ -14,6 +14,7 @@ class OCPHostPrepController extends Controller
   public function generateScriptForTheWizard($runnerType, $input, $target = "all") {
     $streamedData = '';
     switch($runnerType) {
+      //NOTE: Finished, just need to add openshift_master_default_subdomain bits to it I think...
       case "hosts-file":
         //Inventory Builder Array...Builder...
         $inputKeys = array_keys($input);
@@ -39,6 +40,7 @@ class OCPHostPrepController extends Controller
           $streamedData .= $item['networkComponents'][0] . ' ' . $item['hostname'] . ' ' . $item['hostname'] . '.' . $input['domainName'] . "\n";
         }
       break;
+      //NOTE: Finished
       case "sshd-config":
         $streamedData .= 'HostKey /etc/ssh/ssh_host_rsa_key' . "\n";
         $streamedData .= 'HostKey /etc/ssh/ssh_host_ecdsa_key' . "\n";
@@ -71,8 +73,47 @@ class OCPHostPrepController extends Controller
       case "prepare-registry-hosts":
       break;
       case "prepare-gluster-hosts":
+        $streamedData .= '---' . "\n";
+        $streamedData .= '- hosts: ' . $target . "\n";
+        $streamedData .= '  name: Gluster host preperation' . "\n";
+        $streamedData .= '  become: yes' . "\n";
+        $streamedData .= '' . "\n";
+        $streamedData .= '  tasks:' . "\n";
+        $streamedData .= '  - name: Custom RPM repo - Copy template Gluster repo file...' . "\n";
+        $streamedData .= '    delegate_to: nodes' . "\n";
+        $streamedData .= '' . "\n";
+        $streamedData .= '  - name: Custom RPM repo - Disable yum subscription-manager plugin...' . "\n";
+        $streamedData .= '    delegate_to: nodes' . "\n";
+        $streamedData .= '' . "\n";
+        $streamedData .= '  - name: Enable Gluster repos...' . "\n";
+        $streamedData .= '    delegate_to: nodes' . "\n";
+        $streamedData .= '' . "\n";
+        $streamedData .= '  - name: Run yum update...' . "\n";
+        $streamedData .= '    delegate_to: nodes' . "\n";
+        $streamedData .= '' . "\n";
+        $streamedData .= '  - name: Install Gluster packages...' . "\n";
+        $streamedData .= '    delegate_to: nodes' . "\n";
+        $streamedData .= '' . "\n";
       break;
       case "prepare-generic-hosts":
+        $streamedData .= '---' . "\n";
+        $streamedData .= '- hosts: ' . $target . "\n";
+        $streamedData .= '  name: Generic host preperation' . "\n";
+        $streamedData .= '  become: yes' . "\n";
+        $streamedData .= '' . "\n";
+        $streamedData .= '  tasks:' . "\n";
+        $streamedData .= '  - name: Custom RPM repo - Copy template RHEL repo file...' . "\n";
+        $streamedData .= '    delegate_to: nodes' . "\n";
+        $streamedData .= '' . "\n";
+        $streamedData .= '  - name: Custom RPM repo - Disable yum subscription-manager plugin...' . "\n";
+        $streamedData .= '    delegate_to: nodes' . "\n";
+        $streamedData .= '' . "\n";
+        $streamedData .= '  - name: Enable RHEL repos...' . "\n";
+        $streamedData .= '    delegate_to: nodes' . "\n";
+        $streamedData .= '' . "\n";
+        $streamedData .= '  - name: Run yum update...' . "\n";
+        $streamedData .= '    delegate_to: nodes' . "\n";
+        $streamedData .= '' . "\n";
       break;
       case "initial-auth-config":
 

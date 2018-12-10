@@ -17,40 +17,59 @@ class D3CWizardController extends Controller
     $streamedData .= '' . "\n";
     $streamedData .= 'echo "======== Running Initial Host Prep Ansible playbook..."' . "\n";
     $streamedData .= 'ansible-playbook -i inventory/initial-inventory ./initial-auth-config.yml' . "\n";
+    $streamedData .= '' . "\n";
     if ($glusterDeployer) {
+      $streamedData .= 'echo "===================================================="' . "\n";
       $streamedData .= 'echo "====== Running Gluster Deployment playbook..."' . "\n";
+      $streamedData .= 'echo "===================================================="' . "\n";
+      $streamedData .= 'echo ""' . "\n";
       $streamedData .= 'echo "======== Running Host Prep Ansible playbook..."' . "\n";
       $streamedData .= 'ansible-playbook -i inventory/ocp-gluster-inventory ./prepare-gluster-hosts.yml' . "\n";
+      $streamedData .= '' . "\n";
       $streamedData .= 'echo "======== Setting up software on Gluster hosts..."' . "\n";
       $streamedData .= 'ansible-playbook -i inventory/ocp-gluster-inventory ./setup-gluster-hosts.yml' . "\n";
+      $streamedData .= '' . "\n";
       $streamedData .= 'echo "======== Configuring Gluster..."' . "\n";
       $streamedData .= 'ansible-playbook -i inventory/ocp-gluster-inventory ./configure-gluster-hosts.yml' . "\n";
       $streamedData .= '' . "\n";
+      $streamedData .= '' . "\n";
     }
     if ($registryDeployer) {
+      $streamedData .= 'echo "===================================================="' . "\n";
       $streamedData .= 'echo "====== Running Registry Deployer Ansible playbook..."' . "\n";
+      $streamedData .= 'echo "===================================================="' . "\n";
+      $streamedData .= 'echo ""' . "\n";
       $streamedData .= 'echo "======== Running Host Prep Ansible playbook..."' . "\n";
       $streamedData .= 'ansible-playbook -i inventory/ocp-registry-inventory ./prepare-registry-hosts.yml' . "\n";
+      $streamedData .= '' . "\n";
       $streamedData .= 'if [ ! -f .ocp-registry-prerequisites-ran ]; then' . "\n";
       $streamedData .= ' echo "======== Running OCP Ansible prerequisites.yml..."' . "\n";
       $streamedData .= ' ansible-playbook -i inventory/ocp-registry-inventory /usr/share/ansible/openshift-ansible/playbooks/prerequisites.yml' . "\n";
       $streamedData .= ' touch .ocp-registry-prerequisites-ran' . "\n";
       $streamedData .= 'fi' . "\n";
+      $streamedData .= '' . "\n";
       $streamedData .= 'echo "======== Running OCP Ansible deploy_cluster.yml..."' . "\n";
       $streamedData .= 'ansible-playbook -i inventory/ocp-registry-inventory /usr/share/ansible/openshift-ansible/playbooks/deploy_cluster.yml' . "\n";
       $streamedData .= '' . "\n";
+      $streamedData .= '' . "\n";
     }
     if ($ocpDeployer) {
+      $streamedData .= 'echo "===================================================="' . "\n";
       $streamedData .= 'echo "====== Running OCP Deployment Ansible playbook..."' . "\n";
+      $streamedData .= 'echo "===================================================="' . "\n";
+      $streamedData .= 'echo ""' . "\n";
       $streamedData .= 'echo "======== Running Host Prep Ansible playbook..."' . "\n";
       $streamedData .= 'ansible-playbook -i inventory/ocp-inventory ./prepare-ocp-hosts.yml' . "\n";
+      $streamedData .= '' . "\n";
       $streamedData .= 'if [ ! -f .ocp-prerequisites-ran ]; then' . "\n";
       $streamedData .= ' echo "======== Running OCP Ansible prerequisites.yml..."' . "\n";
       $streamedData .= ' ansible-playbook -i inventory/ocp-inventory /usr/share/ansible/openshift-ansible/playbooks/prerequisites.yml' . "\n";
       $streamedData .= ' touch .ocp-prerequisites-ran' . "\n";
       $streamedData .= 'fi' . "\n";
+      $streamedData .= '' . "\n";
       $streamedData .= 'echo "======== Running OCP Ansible deploy_cluster.yml..."' . "\n";
       $streamedData .= 'ansible-playbook -i inventory/ocp-inventory /usr/share/ansible/openshift-ansible/playbooks/deploy_cluster.yml' . "\n";
+      $streamedData .= '' . "\n";
       $streamedData .= '' . "\n";
     }
     return $streamedData;
@@ -197,6 +216,9 @@ class D3CWizardController extends Controller
 
     $ocpHostPrepScripts =  app('App\Http\Controllers\OCPHostPrepController')->generateScriptForTheWizard("hosts-file", $input);
     $compiledFiles["3_ocp-playbooks/templates/hosts.j2"] = ["3_ocp-playbooks/templates/hosts.j2", $ocpHostPrepScripts];
+
+    $ocpHostPrepScripts =  app('App\Http\Controllers\OCPHostPrepController')->generateScriptForTheWizard("prepare-generic-hosts", $input);
+    $compiledFiles["3_ocp-playbooks/prepare-generic-hosts.yml"] = ["3_ocp-playbooks/prepare-generic-hosts.yml", $ocpHostPrepScripts];
 
     $ocpHostPrepScripts =  app('App\Http\Controllers\OCPHostPrepController')->generateScriptForTheWizard("initial-auth-config", $input);
     $compiledFiles["3_ocp-playbooks/initial-auth-config.yml"] = ["3_ocp-playbooks/initial-auth-config.yml", $ocpHostPrepScripts];

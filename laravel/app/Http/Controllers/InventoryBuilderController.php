@@ -316,7 +316,8 @@ class InventoryBuilderController extends Controller
               $oseChildren["lb"] = "lb";
             break;
             case "gluster":
-              //$oseChildren["glusterHosts"] = "glusterHosts";
+              $oseChildren["gluster_nodes"] = "gluster_nodes";
+              $oseChildren["nodes"] = "nodes";
             break;
             case "NA":
             default:
@@ -325,7 +326,13 @@ class InventoryBuilderController extends Controller
         }
         $streamedData = '---' . "\n";
         $streamedData .= "# Gluster Cluster Deployer Inventory";
-
+        $streamedData .= '# Create an OSEv3 group that contains the master, nodes, etcd, and lb groups.' . "\n";
+        $streamedData .= '# The lb group (if present) lets Ansible configure HAProxy as the load balancing solution.' . "\n";
+        $streamedData .= '# Comment lb out if your load balancer is pre-configured.' . "\n";
+        $streamedData .= '[OSEv3:children]' . "\n";
+        foreach ($compiledItems as $itemKey => $itemVal) {
+          echo $itemKey . "\n";
+        }
       break;
 
       case "ocp":
