@@ -84,16 +84,20 @@ easy to use locally.  Alternatively this can run on most LAMP/LEMP
 servers with little effort.
 
 So say maybe with a brand new Ubuntu VM you'd do something like...
-    # apt install apt install composer php-mysql php-fpm php-mbstring php-tokenizer php-zip zip unzip php-xml php-json php-common nginx mariadb-server git
-    # cd /var/www/html
-    # git clone https://github.com/kenmoini/d3-config.git
-    # chown -R www-data:www-data .
-    # sed -i "s|;cgi.fix_pathinfo=1|cgi.fix_pathinfo=0|g" /etc/php/7.2/fpm/php.ini
-    # systemctl restart php7.2-fpm
+~~~~
+# apt install apt install composer php-mysql php-fpm php-mbstring php-tokenizer php-zip zip unzip php-xml php-json php-common nginx mariadb-server git
+# cd /var/www/html
+# git clone https://github.com/kenmoini/d3-config.git
+# chown -R www-data:www-data .
+# sed -i "s|;cgi.fix_pathinfo=1|cgi.fix_pathinfo=0|g" /etc/php/7.2/fpm/php.ini
+# systemctl restart php7.2-fpm
+~~~~
 
 Configure Nginx and PHP to run similar to something like this: [Install Laravel & LEMP on Ubuntu](https://www.digitalocean.com/community/tutorials/how-to-deploy-a-laravel-application-with-nginx-on-ubuntu-16-04).
 Then, go into the laravel directory and run the following and you should be good to go:
-    # composer install
-    # cp .env.example .env
-    # php artisan key:generate
-    # php artisan cache:clear
+~~~~
+# composer install
+# cp .env.example .env
+# php artisan key:generate
+# php artisan cache:clear
+~~~~
