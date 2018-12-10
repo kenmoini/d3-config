@@ -1,6 +1,7 @@
     <footer>
       <div class="col-sm-12 mt-5 mb-5">
         <p class="text-center"><a href="https://github.com/kenmoini/d3-config">Find me on Github</a></p>
+        <p class="text-center text-muted"><?php echo app('App\Http\Controllers\OCPHostPrepController')->get_current_git_commit(); ?>
       </div>
     </footer>
 
