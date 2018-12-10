@@ -19,10 +19,11 @@
 @section('content')
   <section id="ocp-registry-deployer-form-section">
     <div class="offset-md-1 col-md-10">
+      <div class="alert alert-info"><strong>Status:</strong> Not complete, Wizard bits need to be back-ported.</div>
       <form id="ocpRegistryDeployerForm" action="/ocp-registry-deployer" method="POST">
         @csrf
         <div class="row">
-          
+
           <div class="col-sm-12 mb-4">
             <div class="card">
               <div class="card-header">

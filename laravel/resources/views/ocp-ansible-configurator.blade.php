@@ -19,6 +19,7 @@
 @section('content')
   <section id="bastion-host-provisioner-form-section">
     <div class="offset-md-1 col-md-10">
+      <div class="alert alert-info"><strong>Status:</strong> Not complete, Wizard bits need to be back-ported.</div>
       <form id="bastionHostProvisionerForm" action="/bastion-host-provisioner" method="POST">
         @csrf
         <div class="row">

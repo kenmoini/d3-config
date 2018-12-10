@@ -107,6 +107,7 @@
 
 
       <div class="offset-md-1 col-md-10">
+        <div class="alert alert-info"><strong>Status:</strong> Not complete, Wizard is more recent code base waiting to be back-ported.</div>
         <form id="ocpHostPreperationForm" action="/ocp-host-prep" method="POST">
           @csrf
           <div class="alert alert-info" role="alert">
