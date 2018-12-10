@@ -14,8 +14,8 @@ Tech used:
  - Red bull
 
 ## What works
- - 1) DMZ Provisioner
- - 2) Bastion Host Provisioner
+ - 1 ) DMZ Provisioner
+ - 2 ) Bastion Host Provisioner
  - (@) Wizard (with some configurations, oddly enough the more complex 
 ones...)
 
