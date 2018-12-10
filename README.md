@@ -25,6 +25,17 @@ ones...)
  - (@) Wizard (with most configurations)
  - Lots...
 
+## Roadmap
+At the current point in time this Disconnected DevSecOps Deployer mostly 
+just deploys OCP/Gluster/Registries.  We need more than that though so 
+there will be options to additionally include:
+
+ - GitLab
+ - CloudBees Core
+ - Eclipse Che
+ - Additional custom Image Streams
+ - Day 2 RPM & Docker repo syncing for disconnected environments
+
 ## How to run this web application
 The easiest way to get started with this is to deploy it in an instance 
 of Laravel Homestead.  This is a Vagrant managed machine and is very 
