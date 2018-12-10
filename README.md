@@ -5,6 +5,8 @@
 
 ##### *Coming soon
 
+![Screenshot of the Wizard](https://raw.githubusercontent.com/kenmoini/d3-config/master/misc/screenshot.png)
+
 ## Technology Brief
 Tech used:
 
