@@ -1,4 +1,6 @@
-
+    <footer>
+      <p><a href="https://github.com/kenmoini/d3-config">Find me on Github</a></p>
+    </footer>
 
     <!-- Bootstrap core JavaScript
     ================================================== -->
