@@ -82,12 +82,12 @@ class D3CWizardController extends Controller
 
 
     $zip = new ZipArchive();
-    $filename = sys_get_temp_dir() . "/bhp-" . uniqid() . ".zip";
+    $filename = sys_get_temp_dir() . "/d3-wizard-" . uniqid() . ".zip";
     if ($zip->open($filename, ZipArchive::CREATE)!==TRUE) {
         exit("COULD NOT CREATE ARCHIVE");
     }
 
-    if ( Isset($input['enableDMZProvisioner']) ) {
+    if ( isset($input['enableDMZProvisioner']) ) {
       if ($input['enableDMZProvisioner'] === "enableDMZProvisioner") {
 
         $dmzData = [
@@ -211,28 +211,28 @@ class D3CWizardController extends Controller
     $ocpDeploymentWrapper = $this->ocpDeploymentWrapperScript($registryDeployer, $glusterDeployer, $ocpDeployer);
     $compiledFiles["3_ocp-playbooks/runner.sh"] = ["3_ocp-playbooks/runner.sh", $ocpDeploymentWrapper];
 
-    $ocpHostPrepScripts =  app('App\Http\Controllers\OCPHostPrepController')->generateScriptForTheWizard("sshd-config", '');
-    $compiledFiles["3_ocp-playbooks/templates/sshd_config.j2"] = ["3_ocp-playbooks/templates/sshd_config.j2", $ocpHostPrepScripts];
+    $ocpHostPrepScripts_sshd_config =  app('App\Http\Controllers\OCPHostPrepController')->generateScriptForTheWizard("sshd-config", '');
+    $compiledFiles["3_ocp-playbooks/templates/sshd_config.j2"] = ["3_ocp-playbooks/templates/sshd_config.j2", $ocpHostPrepScripts_sshd_config];
 
-    $ocpHostPrepScripts =  app('App\Http\Controllers\OCPHostPrepController')->generateScriptForTheWizard("hosts-file", $input);
-    $compiledFiles["3_ocp-playbooks/templates/hosts.j2"] = ["3_ocp-playbooks/templates/hosts.j2", $ocpHostPrepScripts];
+    $ocpHostPrepScripts_hosts_file =  app('App\Http\Controllers\OCPHostPrepController')->generateScriptForTheWizard("hosts-file", $input);
+    $compiledFiles["3_ocp-playbooks/templates/hosts.j2"] = ["3_ocp-playbooks/templates/hosts.j2", $ocpHostPrepScripts_hosts_file];
 
-    $ocpHostPrepScripts =  app('App\Http\Controllers\OCPHostPrepController')->generateScriptForTheWizard("prepare-generic-hosts", $input);
-    $compiledFiles["3_ocp-playbooks/prepare-generic-hosts.yml"] = ["3_ocp-playbooks/prepare-generic-hosts.yml", $ocpHostPrepScripts];
+    $ocpHostPrepScripts_genericHosts =  app('App\Http\Controllers\OCPHostPrepController')->generateScriptForTheWizard("prepare-generic-hosts", $input);
+    $compiledFiles["3_ocp-playbooks/prepare-generic-hosts.yml"] = ["3_ocp-playbooks/prepare-generic-hosts.yml", $ocpHostPrepScripts_genericHosts];
 
-    $ocpHostPrepScripts =  app('App\Http\Controllers\OCPHostPrepController')->generateScriptForTheWizard("initial-auth-config", $input);
-    $compiledFiles["3_ocp-playbooks/initial-auth-config.yml"] = ["3_ocp-playbooks/initial-auth-config.yml", $ocpHostPrepScripts];
+    $ocpHostPrepScripts_initial_auth_config =  app('App\Http\Controllers\OCPHostPrepController')->generateScriptForTheWizard("initial-auth-config", $input);
+    $compiledFiles["3_ocp-playbooks/initial-auth-config.yml"] = ["3_ocp-playbooks/initial-auth-config.yml", $ocpHostPrepScripts_initial_auth_config];
 
 
     foreach ($compiledFiles as $file) {
       $zip->addFromString($file[0], $file[1]);
       //$streamedData[] = [$file[0], $file[1]];
     }
-
     //return response()->json(['success'=>true, 'streamedData' => $streamedData]);
-
-
     $zip->close();
+
+    //ob_clean(); //even better...don't send anything to the output buffer...
+    //ob_end_flush();
 
     // http headers for zip downloads
     header("Pragma: public");
@@ -241,11 +241,13 @@ class D3CWizardController extends Controller
     header("Cache-Control: public");
     header("Content-Description: File Transfer");
     header("Content-type: application/octet-stream");
+    //header("Content-type: application/zip");
     header("Content-Disposition: attachment; filename=\"d3-config-wizard-package.zip\"");
     header("Content-Transfer-Encoding: binary");
-    header("Content-Length: ".filesize($filename));
+    //header("Content-Length: ".filesize($filename));
     ob_end_flush();
     @readfile($filename);
+    unlink($filename); //duh
+    exit();
   }
-
 }
