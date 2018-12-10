@@ -1,0 +1,6 @@
+.inventoryForm tbody tr:last-child .btn-danger, .inventoryForm tbody tr .btn-info, .initialPasswordBits, .initialSSHKeyBits, .ocpRegistryTypeContainedTexts, .ocpClusterTypeContainedTexts, .clusterAuthenticationMethodBits, .createBulkUserBits, .glusterTypeContainedTexts, .registryAuthenticationMethodBits {
+  display:none;
+}
+.inventoryForm tbody tr:last-child .btn-info {
+  display: inline-block;
+}

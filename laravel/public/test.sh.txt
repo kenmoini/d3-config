@@ -1,0 +1,302 @@
+#!/bin/bash
+
+LOCAL_REPO_PATH="/opt/repos"
+
+# This script enables the needed RHEL, OpenShift, Gluster, Ansible, HA, and additional repos needed to mirror them locally.
+# The locally created mirror can then be used to deploy OCP into a disconnected environment.
+
+#===== PRE-RUN NOTES:
+# This assumes you have already registered and subscribed to the needed OpenShift, Gluster, Ansible, and RHEL subscriptions.
+
+echo "====== To ensure that the packages are not deleted after you sync the repository, import the GPG key:"
+rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
+echo "====== Disable all repos..."
+subscription-manager repos --disable="*"
+echo "====== Enable needed repos..."
+subscription-manager repos --enable="rhel-7-server-rpms" \
+--enable="rhel-7-server-extras-rpms" \
+--enable="rhel-7-server-optional-rpms" \
+--enable="rhel-7-server-ose-3.11-rpms" \
+--enable="rhel-7-server-ansible-2.6-rpms" \
+--enable="rhel-ha-for-rhel-7-server-rpms"
+
+echo "====== Update repository listings and local packages..."
+yum update -y
+
+echo "====== Install needed packages to mirror RPMs and Container Images..."
+yum -y install yum-utils createrepo docker git nano curl policycoreutils-python openssh-server
+
+echo "====== Create needed local repo path..."
+mkdir -p $LOCAL_REPO_PATH/{rpms,docker}
+
+echo "====== Sync packages and create repository for each mirrored repo..."
+for repo in \
+rhel-7-server-rpms \
+rhel-7-server-extras-rpms \
+rhel-7-server-optional-rpms \
+rhel-7-server-ose-3.11-rpms \
+rhel-7-server-ansible-2.6-rpms \
+rhel-ha-for-rhel-7-server-rpms
+do
+  reposync --gpgcheck -lm --repoid=${repo} --download_path=$LOCAL_REPO_PATH/rpms
+  createrepo -v $LOCAL_REPO_PATH/rpms/${repo} -o $LOCAL_REPO_PATH/rpms/${repo}
+done
+
+echo "===== RPM REPO SYNC COMPLETE! ====="
+echo "===== RPM Repo Local Size..."
+du -h $LOCAL_REPO_PATH
+
+echo "===== Starting Docker..."
+systemctl start docker
+
+echo "===== Login to Red Hat Registry"
+docker login -u='7231759|disconnected' -p=eyJhbGciOiJSUzUxMiJ9.eyJzdWIiOiI1NzY2MWRmYjk2OGE0MGYwOTEyM2EwYjhhNzc2MDYyNSJ9.QG2uQ5ljBzdvT0Y_VvUOitcmc_WBDikmuPgbVtkqc5RvbruVoOBGANhoK9zaJKtgCvvII58pn110cnkrGwLDglsUsUq2en0jV1jrHF-JgcBPvc2qFSA4QW6OE51bzznRpDAJ0nDISFWiCVM3ygvd6pkUNgIWtuEqWCDgFZ_D7adGTerk_qfZCYtfbpaQKX-isYwhGX4wGIiA4sFOqi0LChHy8wNoE2oWzeNUgBz19cC-TFyaDNpoij6HtWJBO-etXzwPdR-vxBmIlbLgLA3SYjd95bV5oNc_zVtp9ZN5kqiN7hbC-jzib_ebPcW81YEt70iZNPxcI_7e3lqa0JYpoGgWWLMr6biQ7VNK-GhJtoDFf7Y3K5wtn_s-mzxj6839d74FVPoJLm-Y5yry_0XAbAZx_0TTa41syeNBhsi3JXGtrCWKs7ma7VYcAQHakCLnYvztxokpYtTUU1YilAbAjwKtU51tiSOVk8VlyDHCy0w7JWxph87S1YCzgxBhIxctqfLDJw_cPPAJz0M9TMCO0eRfhl8qW_PSW2HZf4VXdekRzBE6hut2_V0P0_hly5aHmR77qOH2Ux9Zl6kZU-bJJWjIjZj61OhZ2dN55fEbaUutWCd7EbPLvxiaVTcuFxAIBZfiHE1SykfDTo2mQMRO-AU0Soa8uDvbGTIsL-JT_eo registry.redhat.io
+
+echo "===== Pull OpenShift Container Platform images..."
+
+echo "===== Pull OpenShift Container Platform infrastructure component images..."
+docker pull registry.redhat.io/openshift3/apb-base
+docker pull registry.redhat.io/openshift3/apb-tools
+docker pull registry.redhat.io/openshift3/automation-broker-apb
+docker pull registry.redhat.io/openshift3/csi-attacher
+docker pull registry.redhat.io/openshift3/csi-driver-registrar
+docker pull registry.redhat.io/openshift3/csi-livenessprobe
+docker pull registry.redhat.io/openshift3/csi-provisioner
+docker pull registry.redhat.io/openshift3/grafana
+docker pull registry.redhat.io/openshift3/image-inspector
+docker pull registry.redhat.io/openshift3/mariadb-apb
+docker pull registry.redhat.io/openshift3/mediawiki
+docker pull registry.redhat.io/openshift3/mediawiki-apb
+docker pull registry.redhat.io/openshift3/mysql-apb
+docker pull registry.redhat.io/openshift3/ose-ansible
+docker pull registry.redhat.io/openshift3/ose-ansible-service-broker
+docker pull registry.redhat.io/openshift3/ose-cli
+docker pull registry.redhat.io/openshift3/ose-cluster-autoscaler
+docker pull registry.redhat.io/openshift3/ose-cluster-capacity
+docker pull registry.redhat.io/openshift3/ose-cluster-monitoring-operator
+docker pull registry.redhat.io/openshift3/ose-console
+docker pull registry.redhat.io/openshift3/ose-configmap-reloader
+docker pull registry.redhat.io/openshift3/ose-control-plane
+docker pull registry.redhat.io/openshift3/ose-deployer
+docker pull registry.redhat.io/openshift3/ose-descheduler
+docker pull registry.redhat.io/openshift3/ose-docker-builder
+docker pull registry.redhat.io/openshift3/ose-docker-registry
+docker pull registry.redhat.io/openshift3/ose-efs-provisioner
+docker pull registry.redhat.io/openshift3/ose-egress-dns-proxy
+docker pull registry.redhat.io/openshift3/ose-egress-http-proxy
+docker pull registry.redhat.io/openshift3/ose-egress-router
+docker pull registry.redhat.io/openshift3/ose-haproxy-router
+docker pull registry.redhat.io/openshift3/ose-hyperkube
+docker pull registry.redhat.io/openshift3/ose-hypershift
+docker pull registry.redhat.io/openshift3/ose-keepalived-ipfailover
+docker pull registry.redhat.io/openshift3/ose-kube-rbac-proxy
+docker pull registry.redhat.io/openshift3/ose-kube-state-metrics
+docker pull registry.redhat.io/openshift3/ose-metrics-server
+docker pull registry.redhat.io/openshift3/ose-node
+docker pull registry.redhat.io/openshift3/ose-node-problem-detector
+docker pull registry.redhat.io/openshift3/ose-operator-lifecycle-manager
+docker pull registry.redhat.io/openshift3/ose-pod
+docker pull registry.redhat.io/openshift3/ose-prometheus-config-reloader
+docker pull registry.redhat.io/openshift3/ose-prometheus-operator
+docker pull registry.redhat.io/openshift3/ose-recycler
+docker pull registry.redhat.io/openshift3/ose-service-catalog
+docker pull registry.redhat.io/openshift3/ose-template-service-broker
+docker pull registry.redhat.io/openshift3/ose-web-console
+docker pull registry.redhat.io/openshift3/postgresql-apb
+docker pull registry.redhat.io/openshift3/registry-console
+docker pull registry.redhat.io/openshift3/snapshot-controller
+docker pull registry.redhat.io/openshift3/snapshot-provisioner
+docker pull registry.redhat.io/rhel7/etcd
+
+echo "===== Pull required OpenShift Container Platform component images for the optional components..."
+docker pull registry.redhat.io/openshift3/metrics-cassandra
+docker pull registry.redhat.io/openshift3/metrics-hawkular-metrics
+docker pull registry.redhat.io/openshift3/metrics-hawkular-openshift-agent
+docker pull registry.redhat.io/openshift3/metrics-heapster
+docker pull registry.redhat.io/openshift3/metrics-schema-installer
+docker pull registry.redhat.io/openshift3/oauth-proxy
+docker pull registry.redhat.io/openshift3/ose-logging-curator5
+docker pull registry.redhat.io/openshift3/ose-logging-elasticsearch5
+docker pull registry.redhat.io/openshift3/ose-logging-eventrouter
+docker pull registry.redhat.io/openshift3/ose-logging-fluentd
+docker pull registry.redhat.io/openshift3/ose-logging-kibana5
+docker pull registry.redhat.io/openshift3/prometheus
+docker pull registry.redhat.io/openshift3/prometheus-alert-buffer
+docker pull registry.redhat.io/openshift3/prometheus-alertmanager
+docker pull registry.redhat.io/openshift3/prometheus-node-exporter
+docker pull registry.redhat.io/cloudforms46/cfme-openshift-postgresql
+docker pull registry.redhat.io/cloudforms46/cfme-openshift-memcached
+docker pull registry.redhat.io/cloudforms46/cfme-openshift-app-ui
+docker pull registry.redhat.io/cloudforms46/cfme-openshift-app
+docker pull registry.redhat.io/cloudforms46/cfme-openshift-embedded-ansible
+docker pull registry.redhat.io/cloudforms46/cfme-openshift-httpd
+docker pull registry.redhat.io/cloudforms46/cfme-httpd-configmap-generator
+docker pull registry.redhat.io/rhgs3/rhgs-server-rhel7
+docker pull registry.redhat.io/rhgs3/rhgs-volmanager-rhel7
+docker pull registry.redhat.io/rhgs3/rhgs-gluster-block-prov-rhel7
+docker pull registry.redhat.io/rhgs3/rhgs-s3-server-rhel7
+
+echo "===== Pull in the Red Hat-certified Source-to-Image (S2I) builder images..."
+docker pull registry.redhat.io/jboss-amq-6/amq63-openshift
+docker pull registry.redhat.io/jboss-datagrid-7/datagrid71-openshift
+docker pull registry.redhat.io/jboss-datagrid-7/datagrid71-client-openshift
+docker pull registry.redhat.io/jboss-datavirt-6/datavirt63-openshift
+docker pull registry.redhat.io/jboss-datavirt-6/datavirt63-driver-openshift
+docker pull registry.redhat.io/jboss-decisionserver-6/decisionserver64-openshift
+docker pull registry.redhat.io/jboss-processserver-6/processserver64-openshift
+docker pull registry.redhat.io/jboss-eap-6/eap64-openshift
+docker pull registry.redhat.io/jboss-eap-7/eap71-openshift
+docker pull registry.redhat.io/jboss-webserver-3/webserver31-tomcat7-openshift
+docker pull registry.redhat.io/jboss-webserver-3/webserver31-tomcat8-openshift
+docker pull registry.redhat.io/openshift3/jenkins-2-rhel7
+docker pull registry.redhat.io/openshift3/jenkins-agent-maven-35-rhel7
+docker pull registry.redhat.io/openshift3/jenkins-agent-nodejs-8-rhel7
+docker pull registry.redhat.io/openshift3/jenkins-slave-base-rhel7
+docker pull registry.redhat.io/openshift3/jenkins-slave-maven-rhel7
+docker pull registry.redhat.io/openshift3/jenkins-slave-nodejs-rhel7
+docker pull registry.redhat.io/rhscl/mongodb-32-rhel7
+docker pull registry.redhat.io/rhscl/mysql-57-rhel7
+docker pull registry.redhat.io/rhscl/perl-524-rhel7
+docker pull registry.redhat.io/rhscl/php-71-rhel7
+docker pull registry.redhat.io/rhscl/postgresql-95-rhel7
+docker pull registry.redhat.io/rhscl/python-35-rhel7
+docker pull registry.redhat.io/redhat-sso-7/sso72-openshift
+docker pull registry.redhat.io/rhscl/ruby-24-rhel7
+docker pull registry.redhat.io/redhat-openjdk-18/openjdk18-openshift
+docker pull registry.redhat.io/redhat-sso-7/sso71-openshift
+docker pull registry.redhat.io/rhscl/nodejs-6-rhel7
+docker pull registry.redhat.io/rhscl/mariadb-101-rhel7
+
+echo "===== Create packaged tars of docker images..."
+echo "===== Create OpenShift Container Platform Infrastructure image package..."
+
+docker save -o $LOCAL_REPO_PATH/docker/ose3-images.tar \
+registry.redhat.io/openshift3/apb-base \
+registry.redhat.io/openshift3/apb-tools \
+registry.redhat.io/openshift3/automation-broker-apb \
+registry.redhat.io/openshift3/csi-attacher \
+registry.redhat.io/openshift3/csi-driver-registrar \
+registry.redhat.io/openshift3/csi-livenessprobe \
+registry.redhat.io/openshift3/csi-provisioner \
+registry.redhat.io/openshift3/grafana \
+registry.redhat.io/openshift3/image-inspector \
+registry.redhat.io/openshift3/mariadb-apb \
+registry.redhat.io/openshift3/mediawiki \
+registry.redhat.io/openshift3/mediawiki-apb \
+registry.redhat.io/openshift3/mysql-apb \
+registry.redhat.io/openshift3/ose-ansible \
+registry.redhat.io/openshift3/ose-ansible-service-broker \
+registry.redhat.io/openshift3/ose-cli \
+registry.redhat.io/openshift3/ose-cluster-autoscaler \
+registry.redhat.io/openshift3/ose-cluster-capacity \
+registry.redhat.io/openshift3/ose-cluster-monitoring-operator \
+registry.redhat.io/openshift3/ose-console \
+registry.redhat.io/openshift3/ose-configmap-reloader \
+registry.redhat.io/openshift3/ose-control-plane \
+registry.redhat.io/openshift3/ose-deployer \
+registry.redhat.io/openshift3/ose-descheduler \
+registry.redhat.io/openshift3/ose-docker-builder \
+registry.redhat.io/openshift3/ose-docker-registry \
+registry.redhat.io/openshift3/ose-efs-provisioner \
+registry.redhat.io/openshift3/ose-egress-dns-proxy \
+registry.redhat.io/openshift3/ose-egress-http-proxy \
+registry.redhat.io/openshift3/ose-egress-router \
+registry.redhat.io/openshift3/ose-haproxy-router \
+registry.redhat.io/openshift3/ose-hyperkube \
+registry.redhat.io/openshift3/ose-hypershift \
+registry.redhat.io/openshift3/ose-keepalived-ipfailover \
+registry.redhat.io/openshift3/ose-kube-rbac-proxy \
+registry.redhat.io/openshift3/ose-kube-state-metrics \
+registry.redhat.io/openshift3/ose-metrics-server \
+registry.redhat.io/openshift3/ose-node \
+registry.redhat.io/openshift3/ose-node-problem-detector \
+registry.redhat.io/openshift3/ose-operator-lifecycle-manager \
+registry.redhat.io/openshift3/ose-pod \
+registry.redhat.io/openshift3/ose-prometheus-config-reloader \
+registry.redhat.io/openshift3/ose-prometheus-operator \
+registry.redhat.io/openshift3/ose-recycler \
+registry.redhat.io/openshift3/ose-service-catalog \
+registry.redhat.io/openshift3/ose-template-service-broker \
+registry.redhat.io/openshift3/ose-web-console \
+registry.redhat.io/openshift3/postgresql-apb \
+registry.redhat.io/openshift3/registry-console \
+registry.redhat.io/openshift3/snapshot-controller \
+registry.redhat.io/openshift3/snapshot-provisioner \
+registry.redhat.io/rhel7/etcd
+
+echo "===== Create OpenShift Container Platform Optional image package..."
+
+docker save -o $LOCAL_REPO_PATH/docker/ose3-optional-images.tar \
+registry.redhat.io/openshift3/metrics-cassandra \
+registry.redhat.io/openshift3/metrics-hawkular-metrics \
+registry.redhat.io/openshift3/metrics-hawkular-openshift-agent \
+registry.redhat.io/openshift3/metrics-heapster \
+registry.redhat.io/openshift3/metrics-schema-installer \
+registry.redhat.io/openshift3/oauth-proxy \
+registry.redhat.io/openshift3/ose-logging-curator5 \
+registry.redhat.io/openshift3/ose-logging-elasticsearch5 \
+registry.redhat.io/openshift3/ose-logging-eventrouter \
+registry.redhat.io/openshift3/ose-logging-fluentd \
+registry.redhat.io/openshift3/ose-logging-kibana5 \
+registry.redhat.io/openshift3/prometheus \
+registry.redhat.io/openshift3/prometheus-alert-buffer \
+registry.redhat.io/openshift3/prometheus-alertmanager \
+registry.redhat.io/openshift3/prometheus-node-exporter \
+registry.redhat.io/cloudforms46/cfme-openshift-postgresql \
+registry.redhat.io/cloudforms46/cfme-openshift-memcached \
+registry.redhat.io/cloudforms46/cfme-openshift-app-ui \
+registry.redhat.io/cloudforms46/cfme-openshift-app \
+registry.redhat.io/cloudforms46/cfme-openshift-embedded-ansible \
+registry.redhat.io/cloudforms46/cfme-openshift-httpd \
+registry.redhat.io/cloudforms46/cfme-httpd-configmap-generator \
+registry.redhat.io/rhgs3/rhgs-server-rhel7 \
+registry.redhat.io/rhgs3/rhgs-volmanager-rhel7 \
+registry.redhat.io/rhgs3/rhgs-gluster-block-prov-rhel7 \
+registry.redhat.io/rhgs3/rhgs-s3-server-rhel7
+
+echo "===== Create OpenShift Container Platform builder image package..."
+
+docker save -o $LOCAL_REPO_PATH/docker/ose3-builder-images.tar \
+registry.redhat.io/jboss-amq-6/amq63-openshift \
+registry.redhat.io/jboss-datagrid-7/datagrid71-openshift \
+registry.redhat.io/jboss-datagrid-7/datagrid71-client-openshift \
+registry.redhat.io/jboss-datavirt-6/datavirt63-openshift \
+registry.redhat.io/jboss-datavirt-6/datavirt63-driver-openshift \
+registry.redhat.io/jboss-decisionserver-6/decisionserver64-openshift \
+registry.redhat.io/jboss-processserver-6/processserver64-openshift \
+registry.redhat.io/jboss-eap-6/eap64-openshift \
+registry.redhat.io/jboss-eap-7/eap71-openshift \
+registry.redhat.io/jboss-webserver-3/webserver31-tomcat7-openshift \
+registry.redhat.io/jboss-webserver-3/webserver31-tomcat8-openshift \
+registry.redhat.io/openshift3/jenkins-2-rhel7 \
+registry.redhat.io/openshift3/jenkins-agent-maven-35-rhel7 \
+registry.redhat.io/openshift3/jenkins-agent-nodejs-8-rhel7 \
+registry.redhat.io/openshift3/jenkins-slave-base-rhel7 \
+registry.redhat.io/openshift3/jenkins-slave-maven-rhel7 \
+registry.redhat.io/openshift3/jenkins-slave-nodejs-rhel7 \
+registry.redhat.io/rhscl/mongodb-32-rhel7 \
+registry.redhat.io/rhscl/mysql-57-rhel7 \
+registry.redhat.io/rhscl/perl-524-rhel7 \
+registry.redhat.io/rhscl/php-71-rhel7 \
+registry.redhat.io/rhscl/postgresql-95-rhel7 \
+registry.redhat.io/rhscl/python-35-rhel7 \
+registry.redhat.io/redhat-sso-7/sso72-openshift \
+registry.redhat.io/rhscl/ruby-24-rhel7 \
+registry.redhat.io/redhat-openjdk-18/openjdk18-openshift \
+registry.redhat.io/redhat-sso-7/sso71-openshift \
+registry.redhat.io/rhscl/nodejs-6-rhel7 \
+registry.redhat.io/rhscl/mariadb-101-rhel7
+
+echo "===== DOCKER IMAGES SYNCED! ====="
+
+echo "===== Total Local Repo Size..."
+du -h $LOCAL_REPO_PATH
+
+echo "======================"
+echo "|"
+echo "===== COMPLETED!"
+echo "|"
+echo "======================"
+echo "Now simply copy the contents of $LOCAL_REPO_PATH to an external drive or burn it to a disc."
+echo "Make sure to include a copy of the RHEL 7.5 Server install ISO, or have a way to install it."
+echo "Then sneakernet it across to the environment and follow the next steps in the README file."
