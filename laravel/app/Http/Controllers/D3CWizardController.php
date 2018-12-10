@@ -12,8 +12,51 @@ class D3CWizardController extends Controller
     return view('wizard');
   }
 
+  public function ocpDeploymentWrapperScript($registryDeployer = true, $glusterDeployer = true, $ocpDeployer = true) {
+    $streamedData = '#!/bin/bash' . "\n";
+    if ($glusterDeployer) {
+      $streamedData .= 'echo "====== Running Gluster Deployment playbook..."' . "\n";
+      $streamedData .= 'echo "======== Running Host Prep Ansible playbook..."' . "\n";
+      $streamedData .= 'ansible-playbook -i inventory/ocp-gluster-inventory ./prepare-gluster-hosts.yml' . "\n";
+      $streamedData .= 'echo "======== Setting up software on Gluster hosts..."' . "\n";
+      $streamedData .= 'ansible-playbook -i inventory/ocp-gluster-inventory ./setup-gluster-hosts.yml' . "\n";
+      $streamedData .= 'echo "======== Configuring Gluster..."' . "\n";
+      $streamedData .= 'ansible-playbook -i inventory/ocp-gluster-inventory ./configure-gluster-hosts.yml' . "\n";
+      $streamedData .= '' . "\n";
+    }
+    if ($registryDeployer) {
+      $streamedData .= 'echo "====== Running Registry Deployer Ansible playbook..."' . "\n";
+      $streamedData .= 'echo "======== Running Host Prep Ansible playbook..."' . "\n";
+      $streamedData .= 'ansible-playbook -i inventory/ocp-registry-inventory ./prepare-registry-hosts.yml' . "\n";
+      $streamedData .= 'if [ ! -f .ocp-registry-prerequisites-ran ]; then' . "\n";
+      $streamedData .= ' echo "======== Running OCP Ansible prerequisites.yml..."' . "\n";
+      $streamedData .= ' ansible-playbook -i inventory/ocp-registry-inventory /usr/share/ansible/openshift-ansible/playbooks/prerequisites.yml' . "\n";
+      $streamedData .= ' touch .ocp-registry-prerequisites-ran' . "\n";
+      $streamedData .= 'fi' . "\n";
+      $streamedData .= 'echo "======== Running OCP Ansible deploy_cluster.yml..."' . "\n";
+      $streamedData .= 'ansible-playbook -i inventory/ocp-registry-inventory /usr/share/ansible/openshift-ansible/playbooks/deploy_cluster.yml' . "\n";
+      $streamedData .= '' . "\n";
+    }
+    if ($ocpDeployer) {
+      $streamedData .= 'echo "====== Running OCP Deployment Ansible playbook..."' . "\n";
+      $streamedData .= 'echo "======== Running Host Prep Ansible playbook..."' . "\n";
+      $streamedData .= 'ansible-playbook -i inventory/ocp-inventory ./prepare-ocp-hosts.yml' . "\n";
+      $streamedData .= 'if [ ! -f .ocp-prerequisites-ran ]; then' . "\n";
+      $streamedData .= ' echo "======== Running OCP Ansible prerequisites.yml..."' . "\n";
+      $streamedData .= ' ansible-playbook -i inventory/ocp-inventory /usr/share/ansible/openshift-ansible/playbooks/prerequisites.yml' . "\n";
+      $streamedData .= ' touch .ocp-prerequisites-ran' . "\n";
+      $streamedData .= 'fi' . "\n";
+      $streamedData .= 'echo "======== Running OCP Ansible deploy_cluster.yml..."' . "\n";
+      $streamedData .= 'ansible-playbook -i inventory/ocp-inventory /usr/share/ansible/openshift-ansible/playbooks/deploy_cluster.yml' . "\n";
+      $streamedData .= '' . "\n";
+    }
+    return $streamedData;
+  }
+
   public function generateScripts() {
     $input = request()->all();
+
+    $compiledFiles = [];
 
     /*
     $zip = new ZipArchive();
@@ -35,7 +78,7 @@ class D3CWizardController extends Controller
           'enabled-repos' => $input['enabled-repos'],
         ];
         $dmzScript = app('App\Http\Controllers\DMZProvisionerController')->generateScriptForTheWizard($dmzData);
-        //$zip->addFromString("dmz-provisioner.sh", $dmzScript);
+        $compiledFiles["1_dmz-provisioner/dmz-provisioner.sh"] = ["1_dmz-provisioner/dmz-provisioner.sh", $dmzScript];
       }
     }
 
@@ -66,7 +109,7 @@ class D3CWizardController extends Controller
         $bastionScriptStream = app('App\Http\Controllers\BastionHostProvisionerController')->generateScriptForTheWizard($bastionHostProvisionerData);
 
         foreach ($bastionScriptStream as $file) {
-          //$zip->addFromString($file[0], $file[1]);
+          $compiledFiles["2_bastionHostProvisioner/" . $file[0]] = ["2_bastionHostProvisioner/" . $file[0], $file[1]];
           //$streamedData[] = $file;
         }
       }
@@ -76,19 +119,22 @@ class D3CWizardController extends Controller
       //Inventory Builder Array...Builder...
       $inputKeys = array_keys($input);
       $setOfKeys = preg_grep('/^inventoryBuilder-uid-/', $inputKeys);
-      $setOfUIDs = $inventoryItems = [];
+      $setOfUIDs = $inventoryItems = $inventoryTypes = [];
       foreach ($setOfKeys as $specificUID) {
         $setOfUIDs[] = $input[$specificUID];
       }
       //Compile array of inventory items
       foreach ($setOfUIDs as $specificUID) {
-        $inventoryItems[] = [
-          'type' => $input['inventoryBuilder-type-' . $specificUID],
-          'hostname' => $input['inventoryBuilder-hostname-' . $specificUID],
-          'staticIPCIDR' => $input['inventoryBuilder-staticIPCIDR-' . $specificUID],
-          'networkComponents' => explode('/', $input['inventoryBuilder-staticIPCIDR-' . $specificUID]),
-          'gateway' => $input['inventoryBuilder-gateway-' . $specificUID],
-        ];
+        if ($input['inventoryBuilder-type-' . $specificUID] !== "NA") {
+          $inventoryTypes[$input['inventoryBuilder-type-' . $specificUID]] = $input['inventoryBuilder-type-' . $specificUID];
+          $inventoryItems[] = [
+            'type' => $input['inventoryBuilder-type-' . $specificUID],
+            'hostname' => $input['inventoryBuilder-hostname-' . $specificUID],
+            'staticIPCIDR' => $input['inventoryBuilder-staticIPCIDR-' . $specificUID],
+            'networkComponents' => explode('/', $input['inventoryBuilder-staticIPCIDR-' . $specificUID]),
+            'gateway' => $input['inventoryBuilder-gateway-' . $specificUID],
+          ];
+        }
       }
 
       $dataIn['inventoryItems'] = $inventoryItems;
@@ -111,13 +157,57 @@ class D3CWizardController extends Controller
       $dataIn['openshift_master_cluster_public_hostname'] = $input['openshift_master_cluster_public_hostname'];
       $dataIn['openshift_master_default_subdomain'] = $input['openshift_master_default_subdomain'];
       $dataIn['registry_openshift_master_default_subdomain'] = $input['registry_openshift_master_default_subdomain'];
+      $registryDeployer = $glusterDeployer = $ocpDeployer = false;
+      foreach ($inventoryTypes as $iTypes) {
+        if (in_array($iTypes, ["master", "aio", "etcd", "app"])) {
+          $ocpInventoryStream = app('App\Http\Controllers\InventoryBuilderController')->generateInventoryFileForTheWizard("ocp", $dataIn);
+          $compiledFiles["3_ocp-playbooks/inventory/ocp-inventory"] = ["3_ocp-playbooks/inventory/ocp-inventory", $ocpInventoryStream];
+          $ocpDeployer = true;
+        }
+        if (in_array($iTypes, ["registry", "load-balancer-registry"])) {
+          $ocpRegistryInventoryStream = app('App\Http\Controllers\InventoryBuilderController')->generateInventoryFileForTheWizard("registry", $dataIn);
+          $compiledFiles["3_ocp-playbooks/inventory/ocp-registry-inventory"] = ["3_ocp-playbooks/inventory/ocp-registry-inventory", $ocpRegistryInventoryStream];
+          $registryDeployer = true;
+        }
+        if (in_array($iTypes, ["gluster"])) {
+          $ocpGlusterInventoryStream = app('App\Http\Controllers\InventoryBuilderController')->generateInventoryFileForTheWizard("gluster", $dataIn);
+          $compiledFiles["3_ocp-playbooks/inventory/ocp-gluster-inventory"] = ["3_ocp-playbooks/inventory/ocp-gluster-inventory", $ocpGlusterInventoryStream];
+          $glusterDeployer = true;
+        }
+      }
+      if (count($inventoryTypes) > 0) {
+        $simpleCumulativeInventoryStream = app('App\Http\Controllers\InventoryBuilderController')->generateInventoryFileForTheWizard("simple-cumulative", $dataIn);
+        $compiledFiles["3_ocp-playbooks/inventory/ocp-simple-cumulative-inventory"] = ["3_ocp-playbooks/inventory/ocp-simple-cumulative-inventory", $simpleCumulativeInventoryStream];
+      }
+    }
 
-      $ocpInventoryStream = app('App\Http\Controllers\InventoryBuilderController')->generateInventoryFileForTheWizard("registry", $dataIn);
-      //$zip->addFromString("inventory/ocp-inventory", $ocpInventoryStream);
-      $streamedData = $ocpInventoryStream;
+    $ocpDeploymentWrapper = $this->ocpDeploymentWrapperScript($registryDeployer, $glusterDeployer, $ocpDeployer);
+    $compiledFiles["3_ocp-playbooks/runner.sh"] = ["3_ocp-playbooks/runner.sh", $ocpDeploymentWrapper];
+
+
+    foreach ($compiledFiles as $file) {
+      //$zip->addFromString($file[0], $file[1]);
+      $streamedData[] = [$file[0], $file[1]];
     }
 
     return response()->json(['success'=>true, 'streamedData' => $streamedData]);
+
+    /*
+    $zip->close();
+
+    // http headers for zip downloads
+    header("Pragma: public");
+    header("Expires: 0");
+    header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
+    header("Cache-Control: public");
+    header("Content-Description: File Transfer");
+    header("Content-type: application/octet-stream");
+    header("Content-Disposition: attachment; filename=\"d3-config-wizard-package.zip\"");
+    header("Content-Transfer-Encoding: binary");
+    header("Content-Length: ".filesize($filename));
+    ob_end_flush();
+    @readfile($filename);
+    */
   }
 
 }

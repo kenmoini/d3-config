@@ -352,7 +352,7 @@
 @section('content')
   <section id="ocp-wizard-form-section">
     <div class="offset-md-1 col-md-10">
-      <form id="ocpWizardForm" action="/wizard" method="POST" autocomplete="off">
+      <form id="ocpWizardForm" action="/d3-config-wizard" method="POST" autocomplete="off">
         @csrf
         <div class="row">
 

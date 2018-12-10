@@ -9,6 +9,57 @@ class InventoryBuilderController extends Controller
 {
   public function generateInventoryFileForTheWizard($inventoryRunner, $input) {
     switch ($inventoryRunner) {
+      case "simple-cumulative":
+        $inventoryItems = $input['inventoryItems'];
+        $compiledItems = [];
+        $streamedData = '# Simple cumulative host file' . "\n\n";
+        $streamedData .= '[d3C:children]' . "\n";
+        foreach ($inventoryItems as $host) {
+          //Add proper types to groups > [n] => [hostname, ip, labels]
+          //if (in_array($host['type'], ['registry', 'load-balancer-registry'])) {
+            $compiledItems[$host['type']][] = [
+              'type' => $host['type'],
+              'hostname' => $host['hostname'],
+              'staticIPCIDR' => $host['staticIPCIDR'],
+              'networkComponents' => $host['networkComponents'],
+              'gateway' => $host['gateway'],
+              'schedulable' => true,
+            ];
+          //}
+        }
+        foreach ($compiledItems as $itemKey => $itemVal) {
+          $streamedData .= $itemKey . "\n";
+        }
+        $streamedData .= "\n";
+        $streamedData .= '[d3C:vars]' . "\n";
+        if (isset($input['ansible_ssh_user'])) {
+          $streamedData .= 'ansible_ssh_user=' . $input['ansible_ssh_user'] . "\n";
+        }
+        else {
+          $streamedData .= 'ansible_ssh_user=root' . "\n";
+        }
+        if (isset($input['ansible_become'])) {
+          $streamedData .= 'ansible_become=true' . "\n";
+        }
+        $streamedData .= "\n";
+        foreach ($compiledItems as $itemKey => $itemVal) {
+          $streamedData .= '[' . $itemKey . ']' . "\n";
+          foreach ($itemVal as $item) {
+            $streamedData .= $item['hostname'] . '.' . $input['domainName'] . ' openshift_public_ip=' . $item['networkComponents'][0] . ' openshift_ip=' . $item['networkComponents'][0] . ' openshift_public_hostname=' . $item['hostname'] . '.' . $input['domainName'];
+            $streamedData .= '' . "\n";
+          }
+          $streamedData .= '' . "\n";
+        }
+        $streamedData .= '' . "\n";
+        $streamedData .= '[all_nodes]' . "\n";
+        foreach ($compiledItems as $itemKey => $itemVal) {
+          foreach ($itemVal as $item) {
+            $streamedData .= $item['hostname'] . '.' . $input['domainName'] . ' openshift_public_ip=' . $item['networkComponents'][0] . ' openshift_ip=' . $item['networkComponents'][0] . ' openshift_public_hostname=' . $item['hostname'] . '.' . $input['domainName'];
+            $streamedData .= '' . "\n";
+          }
+        }
+
+      break;
       case "registry":
         $inventoryItems = $input['inventoryItems'];
         $compiledItems = [];
@@ -212,7 +263,7 @@ class InventoryBuilderController extends Controller
         }
         $streamedData = '---' . "\n";
         $streamedData .= "# Gluster Cluster Deployer Inventory";
-        
+
       break;
 
       case "ocp":
