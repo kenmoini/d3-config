@@ -9,11 +9,73 @@ class InventoryBuilderController extends Controller
 {
   public function generateInventoryFileForTheWizard($inventoryRunner, $input) {
     switch ($inventoryRunner) {
+      case "initial-inventory":
+        $inventoryItems = $input['inventoryItems'];
+        $compiledItems = [];
+        $streamedData = '# Initial host file' . "\n\n";
+        $streamedData .= '[d3C:children]' . "\n";
+        $streamedData .= 'nodes' . "\n";
+        foreach ($inventoryItems as $host) {
+          //Add proper types to groups > [n] => [hostname, ip, labels]
+          //if (in_array($host['type'], ['registry', 'load-balancer-registry'])) {
+            $compiledItems[$host['type']][] = [
+              'type' => $host['type'],
+              'hostname' => $host['hostname'],
+              'staticIPCIDR' => $host['staticIPCIDR'],
+              'networkComponents' => $host['networkComponents'],
+              'gateway' => $host['gateway'],
+              'schedulable' => true,
+            ];
+          //}
+        }
+        foreach ($compiledItems as $itemKey => $itemVal) {
+          $streamedData .= $itemKey . "\n";
+        }
+        $streamedData .= "\n";
+        $streamedData .= '[d3C:vars]' . "\n";
+        $streamedData .= 'ansible_become=true' . "\n";
+        $streamedData .= 'ansible_connection=ssh' . "\n";
+        if (isset($input['initialUsername'])) {
+          $streamedData .= 'ansible_user=' . $input['initialUsername'] . "\n";
+        }
+        else {
+          $streamedData .= 'ansible_user=root' . "\n";
+        }
+        switch ($input['nodeAuthenticationMethod']) {
+          case "provideCommonPassword":
+            $streamedData .= 'ansible_ssh_pass=' . $input['initialPassword'] . "\n";
+          break;
+          case "provideSSHKey":
+            $streamedData .= 'ansible_ssh_private_key_file=./initialKey.pem' . "\n";
+          break;
+        }
+        $streamedData .= "\n";
+        foreach ($compiledItems as $itemKey => $itemVal) {
+          $streamedData .= '[' . $itemKey . ']' . "\n";
+          foreach ($itemVal as $item) {
+            $streamedData .= $item['hostname'] . '.' . $input['domainName'] . ' openshift_public_ip=' . $item['networkComponents'][0] . ' openshift_ip=' . $item['networkComponents'][0] . ' openshift_public_hostname=' . $item['hostname'] . '.' . $input['domainName'];
+            $streamedData .= '' . "\n";
+          }
+          $streamedData .= '' . "\n";
+        }
+        $streamedData .= '' . "\n";
+        $streamedData .= '[nodes]' . "\n";
+        foreach ($compiledItems as $itemKey => $itemVal) {
+          foreach ($itemVal as $item) {
+            $streamedData .= $item['hostname'] . '.' . $input['domainName'] . ' openshift_public_ip=' . $item['networkComponents'][0] . ' openshift_ip=' . $item['networkComponents'][0] . ' openshift_public_hostname=' . $item['hostname'] . '.' . $input['domainName'];
+            $streamedData .= '' . "\n";
+          }
+        }
+        $streamedData .= '[local_node]' . "\n";
+        $streamedData .= "localhost ansible_connection=local" . "\n";
+
+      break;
       case "simple-cumulative":
         $inventoryItems = $input['inventoryItems'];
         $compiledItems = [];
         $streamedData = '# Simple cumulative host file' . "\n\n";
         $streamedData .= '[d3C:children]' . "\n";
+        $streamedData .= 'nodes' . "\n";
         foreach ($inventoryItems as $host) {
           //Add proper types to groups > [n] => [hostname, ip, labels]
           //if (in_array($host['type'], ['registry', 'load-balancer-registry'])) {
@@ -51,7 +113,7 @@ class InventoryBuilderController extends Controller
           $streamedData .= '' . "\n";
         }
         $streamedData .= '' . "\n";
-        $streamedData .= '[all_nodes]' . "\n";
+        $streamedData .= '[nodes]' . "\n";
         foreach ($compiledItems as $itemKey => $itemVal) {
           foreach ($itemVal as $item) {
             $streamedData .= $item['hostname'] . '.' . $input['domainName'] . ' openshift_public_ip=' . $item['networkComponents'][0] . ' openshift_ip=' . $item['networkComponents'][0] . ' openshift_public_hostname=' . $item['hostname'] . '.' . $input['domainName'];

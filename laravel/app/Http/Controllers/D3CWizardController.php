@@ -14,6 +14,9 @@ class D3CWizardController extends Controller
 
   public function ocpDeploymentWrapperScript($registryDeployer = true, $glusterDeployer = true, $ocpDeployer = true) {
     $streamedData = '#!/bin/bash' . "\n";
+    $streamedData .= '' . "\n";
+    $streamedData .= 'echo "======== Running Initial Host Prep Ansible playbook..."' . "\n";
+    $streamedData .= 'ansible-playbook -i inventory/initial-inventory ./initial-auth-config.yml' . "\n";
     if ($glusterDeployer) {
       $streamedData .= 'echo "====== Running Gluster Deployment playbook..."' . "\n";
       $streamedData .= 'echo "======== Running Host Prep Ansible playbook..."' . "\n";
@@ -58,13 +61,12 @@ class D3CWizardController extends Controller
 
     $compiledFiles = [];
 
-    /*
+
     $zip = new ZipArchive();
     $filename = sys_get_temp_dir() . "/bhp-" . uniqid() . ".zip";
     if ($zip->open($filename, ZipArchive::CREATE)!==TRUE) {
         exit("COULD NOT CREATE ARCHIVE");
     }
-    */
 
     if ( Isset($input['enableDMZProvisioner']) ) {
       if ($input['enableDMZProvisioner'] === "enableDMZProvisioner") {
@@ -157,6 +159,10 @@ class D3CWizardController extends Controller
       $dataIn['openshift_master_cluster_public_hostname'] = $input['openshift_master_cluster_public_hostname'];
       $dataIn['openshift_master_default_subdomain'] = $input['openshift_master_default_subdomain'];
       $dataIn['registry_openshift_master_default_subdomain'] = $input['registry_openshift_master_default_subdomain'];
+      $dataIn['nodeAuthenticationMethod'] = $input['nodeAuthenticationMethod'];
+      $dataIn['initialUsername'] = $input['initialUsername'];
+      if ($input['nodeAuthenticationMethod'] == "provideCommonPassword") { $dataIn['initialPassword'] = $input['initialPassword']; }
+      if ($input['nodeAuthenticationMethod'] == "provideSSHKey") { $dataIn['initialSSHKey'] = $input['initialSSHKey']; }
       $registryDeployer = $glusterDeployer = $ocpDeployer = false;
       foreach ($inventoryTypes as $iTypes) {
         if (in_array($iTypes, ["master", "aio", "etcd", "app"])) {
@@ -176,6 +182,8 @@ class D3CWizardController extends Controller
         }
       }
       if (count($inventoryTypes) > 0) {
+        $initialInventoryStream = app('App\Http\Controllers\InventoryBuilderController')->generateInventoryFileForTheWizard("initial-inventory", $dataIn);
+        $compiledFiles["3_ocp-playbooks/inventory/initial-inventory"] = ["3_ocp-playbooks/inventory/initial-inventory", $initialInventoryStream];
         $simpleCumulativeInventoryStream = app('App\Http\Controllers\InventoryBuilderController')->generateInventoryFileForTheWizard("simple-cumulative", $dataIn);
         $compiledFiles["3_ocp-playbooks/inventory/ocp-simple-cumulative-inventory"] = ["3_ocp-playbooks/inventory/ocp-simple-cumulative-inventory", $simpleCumulativeInventoryStream];
       }
@@ -184,15 +192,24 @@ class D3CWizardController extends Controller
     $ocpDeploymentWrapper = $this->ocpDeploymentWrapperScript($registryDeployer, $glusterDeployer, $ocpDeployer);
     $compiledFiles["3_ocp-playbooks/runner.sh"] = ["3_ocp-playbooks/runner.sh", $ocpDeploymentWrapper];
 
+    $ocpHostPrepScripts =  app('App\Http\Controllers\OCPHostPrepController')->generateScriptForTheWizard("sshd-config", '');
+    $compiledFiles["3_ocp-playbooks/templates/sshd_config.j2"] = ["3_ocp-playbooks/templates/sshd_config.j2", $ocpHostPrepScripts];
+
+    $ocpHostPrepScripts =  app('App\Http\Controllers\OCPHostPrepController')->generateScriptForTheWizard("hosts-file", $input);
+    $compiledFiles["3_ocp-playbooks/templates/hosts.j2"] = ["3_ocp-playbooks/templates/hosts.j2", $ocpHostPrepScripts];
+
+    $ocpHostPrepScripts =  app('App\Http\Controllers\OCPHostPrepController')->generateScriptForTheWizard("initial-auth-config", $input);
+    $compiledFiles["3_ocp-playbooks/initial-auth-config.yml"] = ["3_ocp-playbooks/initial-auth-config.yml", $ocpHostPrepScripts];
+
 
     foreach ($compiledFiles as $file) {
-      //$zip->addFromString($file[0], $file[1]);
-      $streamedData[] = [$file[0], $file[1]];
+      $zip->addFromString($file[0], $file[1]);
+      //$streamedData[] = [$file[0], $file[1]];
     }
 
-    return response()->json(['success'=>true, 'streamedData' => $streamedData]);
+    //return response()->json(['success'=>true, 'streamedData' => $streamedData]);
 
-    /*
+
     $zip->close();
 
     // http headers for zip downloads
@@ -207,7 +224,6 @@ class D3CWizardController extends Controller
     header("Content-Length: ".filesize($filename));
     ob_end_flush();
     @readfile($filename);
-    */
   }
 
 }

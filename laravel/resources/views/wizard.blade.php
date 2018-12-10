@@ -13,7 +13,62 @@
 @section('footer-scripts')
 <script type="text/javascript">
 <!--
-
+  function populateFormDemo() {
+    jQuery("#registryUsername").val("qwerqwerqwer");
+    jQuery("#registryPassword").val("asdfasdfasdfasdfasdfasdfasdf");
+    jQuery("#domainName").val("discon.lab");
+    jQuery("#localRepoPath").val("/opt/repos");
+    jQuery("#bastionHostHostname").val("bastion");
+    jQuery("#repoContentPath").val("/media/external/repos");
+    jQuery("#bastionStaticIP").val("192.168.42.1");
+    jQuery("#dhcpCIDR").val("192.168.42.0/24");
+    jQuery("#dhcpStartRange").val("192.168.42.100");
+    jQuery("#dhcpStopRange").val("192.168.42.250");
+    jQuery("#bastionWANInterface").val("eth0");
+    jQuery("#bastionLANInterface").val("eth1");
+    jQuery("#ocpClusterType").val("multipleMasterHAExternalEtcd");
+    jQuery("#ocpApplicationNodeCount").val("6");
+    jQuery("#ocpRegistryType").val("standalone");
+    jQuery("#glusterStorageType").val("singleClusterSingleBrick");
+    jQuery("#glusterClusterNodeCount").val("3");
+    clearInventoryRows();
+    createSuggestedInventoryRunner();
+    resetInventoryRowHeaderNumbers();
+    jQuery(".inventoryBuilder-gateways").val("192.168.42.1");
+    jQuery("#inventoryBuilder-staticIPCIDR-1").val("192.168.42.11/24");
+    jQuery("#inventoryBuilder-staticIPCIDR-2").val("192.168.42.12/24");
+    jQuery("#inventoryBuilder-staticIPCIDR-3").val("192.168.42.13/24");
+    jQuery("#inventoryBuilder-staticIPCIDR-4").val("192.168.42.10/24");
+    jQuery("#inventoryBuilder-staticIPCIDR-5").val("192.168.42.20/24");
+    jQuery("#inventoryBuilder-staticIPCIDR-6").val("192.168.42.21/24");
+    jQuery("#inventoryBuilder-staticIPCIDR-7").val("192.168.42.22/24");
+    jQuery("#inventoryBuilder-staticIPCIDR-8").val("192.168.42.30/24");
+    jQuery("#inventoryBuilder-staticIPCIDR-9").val("192.168.42.40/24");
+    jQuery("#inventoryBuilder-staticIPCIDR-10").val("192.168.42.41/24");
+    jQuery("#inventoryBuilder-staticIPCIDR-11").val("192.168.42.42/24");
+    jQuery("#inventoryBuilder-staticIPCIDR-12").val("192.168.42.50/24");
+    jQuery("#inventoryBuilder-staticIPCIDR-13").val("192.168.42.51/24");
+    jQuery("#inventoryBuilder-staticIPCIDR-14").val("192.168.42.52/24");
+    jQuery("#inventoryBuilder-staticIPCIDR-15").val("192.168.42.53/24");
+    jQuery("#inventoryBuilder-staticIPCIDR-16").val("192.168.42.54/24");
+    jQuery("#inventoryBuilder-staticIPCIDR-17").val("192.168.42.55/24");
+    jQuery("#initialUsername").val("root");
+    jQuery("#nodeAuthenticationMethod").val("provideCommonPassword");
+    jQuery("#initialPassword").val("asdfasdfasdf");
+    jQuery("#newUsername").val("ocp-worker");
+    jQuery("#privateRPMRepoURL").val("http://bastion.discon.lab/rpms/");
+    jQuery("#additionalBlockDevice").val("/dev/sdb");
+    jQuery("#registryAuthenticationMethod").val("allowAll");
+    jQuery("#registryURL").val("ocp-registry.discon.lab");
+    jQuery("#registry_openshift_master_default_subdomain").val("registry-apps.ocp-cluster.discon.lab");
+    jQuery("#clusterAuthenticationMethod").val("htpasswd");
+    jQuery("#ocpAdminUsername").val("ocp-admin");
+    jQuery("#ocpAdminPassword").val("asfasdfasdf");
+    jQuery("#ansible_ssh_user").val("ocp-worker");
+    jQuery("#openshift_master_cluster_hostname").val("ocp-master-lb-1.discon.lab");
+    jQuery("#openshift_master_cluster_public_hostname").val("ocp-cluster.discon.lab");
+    jQuery("#openshift_master_default_subdomain").val("apps.ocp-cluster.discon.lab");
+  }
   function resetInventoryRowHeaderNumbers() {
     var colNum = 1;
     jQuery(".inventoryForm table tbody tr").each(function() {
@@ -48,11 +103,97 @@
 
     var newRow = '<tr><th scope="row">' + newRowHeaderNum + '</th>';
     newRow = newRow + '<td><input value="' + newRowNum + '" class="inventoryBuilder-hidden-uid" type="hidden" id="inventoryBuilder-uid-' + newRowNum + '" name="inventoryBuilder-uid-' + newRowNum + '" /><select id="inventoryBuilder-type-' + newRowNum + '" name="inventoryBuilder-type-' + newRowNum + '" class="form-control"><option ' + defaultType + ' value="NA">Select an option...</option><option ' + masterType + ' value="master">Master</option><option ' + etcdType + ' value="etcd">Etcd</option><option ' + appType + ' value="app">App</option><option ' + loadBalancerType + ' value="load-balancer">Load Balancer</option><option ' + loadBalancerRegistryType + ' value="load-balancer-registry">Load Balancer - Registry</option><option ' + registryType + ' value="registry">Registry</option><option ' + aioType + ' value="aio">All-in-One</option><option ' + glusterType + ' value="gluster">Gluster</option></select></td>';
-    newRow = newRow + '<td><input type="text" class="form-control" value="' + nodeHostname + '" placeholder="node-' + newRowNum + '" id="inventoryBuilder-hostname-' + newRowNum + '" name="inventoryBuilder-hostname-' + newRowNum + '" /></td>';
-    newRow = newRow + '<td><input type="text" class="form-control" value="' + nodeCIDR + '" placeholder="192.168.42.10/24" id="inventoryBuilder-staticIPCIDR-' + newRowNum + '" name="inventoryBuilder-staticIPCIDR-' + newRowNum + '" /></td>';
-    newRow = newRow + '<td><input type="text" class="form-control" value="' + nodeGateway + '" placeholder="192.168.42.1" id="inventoryBuilder-gateway-' + newRowNum + '" name="inventoryBuilder-gateway-' + newRowNum + '" /></td>';
+    newRow = newRow + '<td><input type="text" class="form-control inventoryBuilder-hostnames" value="' + nodeHostname + '" placeholder="node-' + newRowNum + '" id="inventoryBuilder-hostname-' + newRowNum + '" name="inventoryBuilder-hostname-' + newRowNum + '" /></td>';
+    newRow = newRow + '<td><input type="text" class="form-control inventoryBuilder-cidrs" value="' + nodeCIDR + '" placeholder="192.168.42.10/24" id="inventoryBuilder-staticIPCIDR-' + newRowNum + '" name="inventoryBuilder-staticIPCIDR-' + newRowNum + '" /></td>';
+    newRow = newRow + '<td><input type="text" class="form-control inventoryBuilder-gateways" value="' + nodeGateway + '" placeholder="192.168.42.1" id="inventoryBuilder-gateway-' + newRowNum + '" name="inventoryBuilder-gateway-' + newRowNum + '" /></td>';
     newRow = newRow + '<td><button class="btn btn-info text-white">+ Add Host</button> <button class="btn btn-danger"><i class="fa fa-trash"></i></button></td></tr>';
     jQuery(".inventoryForm table tbody").append(newRow);
+  }
+
+  function createSuggestedInventoryRunner() {
+    switch (jQuery("#ocpClusterType").val()) {
+      case "singleContained":
+        addInventoryItemRow("aio", "ocp");
+      break;
+      case "singleMaster":
+        addInventoryItemRow("master", "master");
+      break;
+      case "multipleMasterHA":
+        addInventoryItemRow("master", "ocp-master-1");
+        addInventoryItemRow("master", "ocp-master-2");
+        addInventoryItemRow("master", "ocp-master-3");
+        addInventoryItemRow("load-balancer", "ocp-master-lb-1");
+      break;
+      case "multipleMasterHAExternalEtcd":
+        addInventoryItemRow("master", "ocp-master-1");
+        addInventoryItemRow("master", "ocp-master-2");
+        addInventoryItemRow("master", "ocp-master-3");
+        addInventoryItemRow("load-balancer", "ocp-master-lb-1");
+        addInventoryItemRow("etcd", "ocp-etcd-1");
+        addInventoryItemRow("etcd", "ocp-etcd-2");
+        addInventoryItemRow("etcd", "ocp-etcd-3");
+      break;
+      case "NA":
+      default:
+      break;
+    }
+    switch(jQuery("#ocpRegistryType").val()) {
+      case "standalone":
+        addInventoryItemRow("registry", "ocp-registry");
+      break;
+      case "multipleMasterHA":
+        addInventoryItemRow("registry", "ocp-registry-1");
+        addInventoryItemRow("registry", "ocp-registry-2");
+        addInventoryItemRow("registry", "ocp-registry-3");
+        addInventoryItemRow("load-balancer-registry", "ocp-registry-lb-1");
+      break;
+      case "external":
+      case "integrated":
+      case "NA":
+      default:
+      break;
+    }
+    switch(jQuery("#glusterStorageType").val()) {
+      case "singleClusterSingleBrick":
+      case "singleClusterSeparateBricks":
+        var glusterClusterNodeCount = jQuery("#glusterClusterNodeCount").val();
+        console.log(glusterClusterNodeCount);
+        if ( (glusterClusterNodeCount === undefined) || (glusterClusterNodeCount === null) || (glusterClusterNodeCount === '') ) { glusterClusterNodeCount = 3; }
+
+        if ( (jQuery("#glusterStorageType").val() != "none") && (jQuery("#glusterStorageType").val() != "NA")) {
+          for(i=1;i<=glusterClusterNodeCount;i++) {
+            addInventoryItemRow("gluster", "gluster-" + i);
+          }
+        }
+      break;
+      case "separateClusterSeparateBricks":
+        var glusterClusterNodeCount = jQuery("#glusterClusterNodeCount").val();
+        console.log(glusterClusterNodeCount);
+        if ( (glusterClusterNodeCount === undefined) || (glusterClusterNodeCount === null) || (glusterClusterNodeCount === '') ) { glusterClusterNodeCount = 3; }
+
+        if ( (jQuery("#glusterStorageType").val() != "none") && (jQuery("#glusterStorageType").val() != "NA")) {
+          for(i=1;i<=glusterClusterNodeCount;i++) {
+            addInventoryItemRow("gluster", "gluster-c1-" + i);
+            addInventoryItemRow("gluster", "gluster-c2-" + i);
+          }
+        }
+      break;
+      case "none":
+      case "NA":
+      default:
+      break;
+    }
+
+    var ocpApplicationNodeCount = jQuery("#ocpApplicationNodeCount").val();
+    console.log(ocpApplicationNodeCount);
+    if ( (ocpApplicationNodeCount === undefined) || (ocpApplicationNodeCount === null) || (ocpApplicationNodeCount === '') ) { ocpApplicationNodeCount = 3; }
+
+    if ( (jQuery("#ocpClusterType").val() != "singleContained") && (jQuery("#ocpClusterType").val() != "NA")) {
+      for(i=1;i<=ocpApplicationNodeCount;i++) {
+        console.log(i);
+        addInventoryItemRow("app", "ocp-app-" + i);
+      }
+    }
   }
 
   jQuery(document).ready(function() {
@@ -61,7 +202,7 @@
         'X-CSRF-TOKEN': jQuery('meta[name="csrf-token"]').attr('content')
       }
     });
-
+    /*
     jQuery("#ocpWizardForm").submit(function(e){
       e.preventDefault();
 
@@ -78,6 +219,7 @@
         }
       });
     });
+    */
 
     jQuery('#enableBastionHostProvisioner').change(function() {
         if(this.checked) {
@@ -204,89 +346,7 @@
       e.stopPropagation();
       clearInventoryRows();
 
-      switch (jQuery("#ocpClusterType").val()) {
-        case "singleContained":
-          addInventoryItemRow("aio", "ocp");
-        break;
-        case "singleMaster":
-          addInventoryItemRow("master", "master");
-        break;
-        case "multipleMasterHA":
-          addInventoryItemRow("master", "ocp-master-1");
-          addInventoryItemRow("master", "ocp-master-2");
-          addInventoryItemRow("master", "ocp-master-3");
-          addInventoryItemRow("load-balancer", "ocp-master-lb-1");
-        break;
-        case "multipleMasterHAExternalEtcd":
-          addInventoryItemRow("master", "ocp-master-1");
-          addInventoryItemRow("master", "ocp-master-2");
-          addInventoryItemRow("master", "ocp-master-3");
-          addInventoryItemRow("load-balancer", "ocp-master-lb-1");
-          addInventoryItemRow("etcd", "ocp-etcd-1");
-          addInventoryItemRow("etcd", "ocp-etcd-2");
-          addInventoryItemRow("etcd", "ocp-etcd-3");
-        break;
-        case "NA":
-        default:
-        break;
-      }
-      switch(jQuery("#ocpRegistryType").val()) {
-        case "standalone":
-          addInventoryItemRow("registry", "ocp-registry");
-        break;
-        case "multipleMasterHA":
-          addInventoryItemRow("registry", "ocp-registry-1");
-          addInventoryItemRow("registry", "ocp-registry-2");
-          addInventoryItemRow("registry", "ocp-registry-3");
-          addInventoryItemRow("load-balancer-registry", "ocp-registry-lb-1");
-        break;
-        case "external":
-        case "integrated":
-        case "NA":
-        default:
-        break;
-      }
-      switch(jQuery("#glusterStorageType").val()) {
-        case "singleClusterSingleBrick":
-        case "singleClusterSeparateBricks":
-          var glusterClusterNodeCount = jQuery("#glusterClusterNodeCount").val();
-          console.log(glusterClusterNodeCount);
-          if ( (glusterClusterNodeCount === undefined) || (glusterClusterNodeCount === null) || (glusterClusterNodeCount === '') ) { glusterClusterNodeCount = 3; }
-
-          if ( (jQuery("#glusterStorageType").val() != "none") && (jQuery("#glusterStorageType").val() != "NA")) {
-            for(i=1;i<=glusterClusterNodeCount;i++) {
-              addInventoryItemRow("gluster", "gluster-" + i);
-            }
-          }
-        break;
-        case "separateClusterSeparateBricks":
-          var glusterClusterNodeCount = jQuery("#glusterClusterNodeCount").val();
-          console.log(glusterClusterNodeCount);
-          if ( (glusterClusterNodeCount === undefined) || (glusterClusterNodeCount === null) || (glusterClusterNodeCount === '') ) { glusterClusterNodeCount = 3; }
-
-          if ( (jQuery("#glusterStorageType").val() != "none") && (jQuery("#glusterStorageType").val() != "NA")) {
-            for(i=1;i<=glusterClusterNodeCount;i++) {
-              addInventoryItemRow("gluster", "gluster-c1-" + i);
-              addInventoryItemRow("gluster", "gluster-c2-" + i);
-            }
-          }
-        break;
-        case "none":
-        case "NA":
-        default:
-        break;
-      }
-
-      var ocpApplicationNodeCount = jQuery("#ocpApplicationNodeCount").val();
-      console.log(ocpApplicationNodeCount);
-      if ( (ocpApplicationNodeCount === undefined) || (ocpApplicationNodeCount === null) || (ocpApplicationNodeCount === '') ) { ocpApplicationNodeCount = 3; }
-
-      if ( (jQuery("#ocpClusterType").val() != "singleContained") && (jQuery("#ocpClusterType").val() != "NA")) {
-        for(i=1;i<=ocpApplicationNodeCount;i++) {
-          console.log(i);
-          addInventoryItemRow("app", "ocp-app-" + i);
-        }
-      }
+      createSuggestedInventoryRunner();
 
       resetInventoryRowHeaderNumbers();
     });
